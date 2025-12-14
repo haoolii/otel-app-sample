@@ -1,0 +1,106 @@
+{
+  "version": 3,
+  "$schema": "https://www.krakend.io/schema/v2.12/krakend.json",
+  "name": "krakend-bff",
+  "extra_config": {
+    "security/cors": {
+      "allow_origins": [
+        "*"
+      ]
+    },
+    "telemetry/opentelemetry": {
+      "service_name": "krakend_middle_service",
+      "service_version": "commit-sha-ACBDE1234",
+      "deploy_env": "production",
+      "sampling": {
+        "type": "always_on"
+      },
+      "exporters": {
+        "otlp": [
+          {
+            "name": "local_tempo",
+            "host": "otel-collector",
+            "port": 4318,
+            "use_http": true
+          }
+        ]
+      },
+      "layers": {
+        "global": {
+          "disable_metrics": false,
+          "disable_traces": false,
+          "disable_propagation": false
+        },
+        "proxy": {
+          "disable_metrics": false,
+          "disable_traces": false,
+          "traces": {
+            "round_trip": false,
+            "read_payload": true,
+            "detailed_connection": true
+          }
+        },
+        "backend": {
+          "metrics": {
+            "disable_stage": false,
+            "round_trip": false,
+            "read_payload": true,
+            "detailed_connection": true,
+            "static_attributes": [
+              {
+                "key": "my_metric_attr",
+                "value": "my_middle_metric"
+              }
+            ]
+          },
+          "traces": {
+            "disable_stage": false,
+            "round_trip": false,
+            "read_payload": true,
+            "detailed_connection": true,
+            "static_attributes": [
+              {
+                "key": "my_metric_attr",
+                "value": "my_middle_metric"
+              }
+            ]
+          }
+        }
+      }
+    }
+  },
+  "endpoints": [
+    {
+      "endpoint": "/todo",
+      "method": "POST",
+      "output_encoding": "json",
+      "input_headers": [
+        "*"
+      ],
+      "backend": [
+        {
+          "url_pattern": "/todo",
+          "method": "POST",
+          "encoding": "json",
+          "host": [
+            "http://host.docker.internal:3000"
+          ]
+        }
+      ]
+    },
+    {
+      "endpoint": "/posts",
+      "method": "GET",
+      "backend": [
+        {
+          "host": [
+            "https://jsonplaceholder.typicode.com"
+          ],
+          "url_pattern": "/posts",
+          "encoding": "json",
+          "is_collection": true
+        }
+      ]
+    }
+  ]
+}
