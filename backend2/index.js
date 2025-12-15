@@ -24,9 +24,11 @@ app.get('/todo', async (req, res) => {
   try {
     // 模擬 DB 存取
     await fakeDbQuery();
+    const spanContext = span.spanContext();
 
     res.json({
       data: todos,
+      traceId: spanContext.traceId
     });
   } catch (err) {
     span.recordException(err);
@@ -68,7 +70,7 @@ app.post('/todo', async (req, res) => {
 
 function fakeDbQuery() {
   return new Promise((resolve) => setTimeout(resolve, 100));
-}
+} 
 
 function fakeDbInsert() {
   return new Promise((resolve) => setTimeout(resolve, 150));

@@ -14,3 +14,7 @@ scrape_configs:
       - targets: ['otel-collector:8889']
         labels:
           service: 'demo-app'
+
+  - job_name: aggregated-trace-metrics
+    static_configs:
+    - targets: ['spm_metrics_source:8889']

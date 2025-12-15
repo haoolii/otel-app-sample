@@ -2,52 +2,37 @@ receivers:
   otlp:
     protocols:
       grpc:
-        endpoint: 0.0.0.0:4317
       http:
-        endpoint: 0.0.0.0:4318
+        endpoint: "0.0.0.0:4318"
         cors:
-         allowed_origins:
+          allowed_origins:
             - "http://localhost:*"      # 允許本地開發
             - "http://127.0.0.1:*"
 
-processors:
-  batch:
-    timeout: 10s
-    send_batch_size: 1024
-
 exporters:
-  debug:
-    verbosity: detailed
-    sampling_initial: 5
-    sampling_thereafter: 200
+  prometheus:
+    endpoint: "0.0.0.0:8889"
 
-  otlp/jaeger:
+  otlp:
     endpoint: jaeger:4317
     tls:
       insecure: true
 
-  prometheus:
-    endpoint: "0.0.0.0:8889"
-    namespace: demo_app
+connectors:
+  spanmetrics:
 
-extensions:
-  health_check:
-    endpoint: 0.0.0.0:13133
-  zpages:
-    endpoint: 0.0.0.0:55679
+processors:
+  batch:
 
 service:
-  extensions: [health_check, zpages]
   pipelines:
     traces:
       receivers: [otlp]
       processors: [batch]
-      exporters: [debug, otlp/jaeger]
-    metrics:
-      receivers: [otlp]
-      processors: [batch]
-      exporters: [debug, prometheus]
-    logs:
-      receivers: [otlp]
-      processors: [batch]
-      exporters: [debug]
+      exporters: [spanmetrics, otlp]
+
+    # The metrics pipeline receives generated span metrics from 'spanmetrics' connector
+    # and pushes to Prometheus exporter, which makes them available for scraping on :8889.
+    metrics/spanmetrics:
+      receivers: [spanmetrics]
+      exporters: [prometheus]
