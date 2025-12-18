@@ -4,7 +4,7 @@ require('./tracing');
 const express = require('express');
 const cors = require('cors');
 
-const { trace } = require('@opentelemetry/api');
+const { trace, SpanStatusCode } = require('@opentelemetry/api');
 
 const app = express();
 app.use(express.json());
@@ -13,6 +13,21 @@ const tracer = trace.getTracer('todo-service');
 
 // 假資料
 const todos = [];
+
+app.get('/fail', async (req, res) => {
+  const span = tracer.startSpan('get_todo_logic');
+  const spanContext = span.spanContext();
+  // span.setStatus({
+  //   code: SpanStatusCode.ERROR,
+  //   message: 'business validation failed'
+  // })
+  res.status(500).json({
+    data: todos,
+    message: "fail",
+    traceId: spanContext.traceId
+  });
+  span.end();
+});
 
 /**
  * GET /todo
@@ -70,7 +85,7 @@ app.post('/todo', async (req, res) => {
 
 function fakeDbQuery() {
   return new Promise((resolve) => setTimeout(resolve, 100));
-} 
+}
 
 function fakeDbInsert() {
   return new Promise((resolve) => setTimeout(resolve, 150));
