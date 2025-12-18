@@ -3,6 +3,9 @@
   "$schema": "https://www.krakend.io/schema/v2.12/krakend.json",
   "name": "krakend-bff",
   "extra_config": {
+     "router": {
+      "return_error_msg": true
+    },
     "security/cors": {
       "allow_origins": [
         "*"
@@ -70,6 +73,29 @@
     }
   },
   "endpoints": [
+    {
+      "endpoint": "/fail",
+      "method": "GET",
+      "output_encoding": "json",
+      "input_headers": [
+        "*"
+      ],
+      "backend": [
+        {
+          "url_pattern": "/fail",
+          "method": "GET",
+          "encoding": "json",
+          "host": [
+            "http://host.docker.internal:3000"
+          ],
+          "extra_config": {
+            "backend/http": {
+              "return_error_code": true
+            }
+          }
+        }
+      ]
+    },
     {
       "endpoint": "/todo",
       "method": "POST",
